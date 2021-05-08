@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 
@@ -39,9 +40,19 @@ class ViewModel {
     await _repository.updateItems(itemList);
   }
 
+  Future<void> syncItems() async {
+    await _repository.syncItems();
+  }
+
   Future<void> removeItem(Item item) async {
     lastItemList.remove(item);
     await _sendItems(lastItemList);
+  }
+
+  Future<void> addItem(String itemTitle) async {
+    Item newItem = createNewItem(itemTitle);
+    List<Item> updatedItemList = [newItem, ...lastItemList];
+    await _sendItems(updatedItemList);
   }
 
   Future<void> setItems(List<Item> itemList) async {
@@ -51,18 +62,19 @@ class ViewModel {
   Future<void> setItemsFromViewItems(List<ViewItem> viewItems) async {
     await _sendItems(getItemListFromViewItemList(viewItems));
   }
+}
 
-  //TODO: Add Item
-
-  // TODO: Make TapHandler Send Items
+Item createNewItem(String itemTitle) {
+  return Item(Random().nextInt(99999), itemTitle,
+      DateTime.now().millisecondsSinceEpoch);
 }
 
 ViewItem getViewItem(ViewModel viewModel, Item item) {
-  tapHandler() {
+  removeHandler() {
     viewModel.removeItem(item);
   }
 
-  return ViewItem(item, tapHandler);
+  return ViewItem(item, removeHandler);
 }
 
 List<Item> getItemListFromViewItemList(List<ViewItem> viewItems) {

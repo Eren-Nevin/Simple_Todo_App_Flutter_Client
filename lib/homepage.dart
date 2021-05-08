@@ -1,57 +1,108 @@
 import 'package:flutter/material.dart';
+import 'package:list/mainBodyWidget.dart';
 
-import 'dart:math';
-// import './model.dart';
 import './viewModel.dart';
-import './itemWidgetList.dart';
+import 'utilities.dart';
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+  final ViewModel _viewModel;
+  MyHomePage(this._viewModel, {Key key, this.title}) : super(key: key);
 
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _MyHomePageState createState() => _MyHomePageState(_viewModel);
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   ViewModel _viewModel;
-  _MyHomePageState() {
-    _viewModel = ViewModel();
+  ValueNotifier<bool> startAddingItems;
+  _MyHomePageState(this._viewModel) {
+    startAddingItems = ValueNotifier(false);
   }
-  // List<Item> itemList = [];
-
-  // _MyHomePageState() {
-  //   _getItemsFromServer().then((value) => {setState(() => itemList = value)});
-  // }
-
-  // newItemHandler() {
-  //   setState(() => {
-  //         itemList = [
-  //           ...itemList,
-  //           Item(Random().nextInt(10000), 'New-Flutter',
-  //               DateTime.now().millisecondsSinceEpoch)
-  //         ]
-  //       });
-  //   _sendItemsToServer(itemList);
-  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
+      appBar: appBarBuilder("${getWeekDayName(DateTime.now())}", "Groceries"),
       body: Container(
         alignment: Alignment.topCenter,
-        padding: EdgeInsets.all(8.0),
-        child: ItemWidgetList(_viewModel),
+        child: Container(
+          child: ItemListWithTextFieldWidget(_viewModel, startAddingItems),
+          margin: EdgeInsets.all(8.0),
+        ),
+        color: Colors.indigo,
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => {},
+        onPressed: () {
+          startAddingItems.value = !startAddingItems.value;
+        },
         tooltip: 'Add New Item',
         child: Icon(Icons.add),
       ),
+    );
+  }
+}
+
+//TODO: Have One Tab in Navigation Bar For Private List, The Other Two Can Be
+//Groceries & Family Tasks Which Are Shared Among A Family.
+
+Widget bottomNavigationBarBuilder() {
+  return BottomNavigationBar(
+    items: [
+      BottomNavigationBarItem(
+          label: "Groceries",
+          icon: Icon(Icons.shopping_bag_rounded,
+              size: 36.0, color: Colors.green.shade200)),
+      BottomNavigationBarItem(
+          label: "Groceries",
+          icon: Icon(Icons.shopping_bag_rounded,
+              size: 36.0, color: Colors.green.shade600)),
+      BottomNavigationBarItem(
+          label: "Groceries",
+          icon: Icon(Icons.shopping_bag_rounded,
+              size: 36.0, color: Colors.green.shade600)),
+    ],
+    backgroundColor: Colors.purple.shade900,
+    showUnselectedLabels: false,
+    showSelectedLabels: false,
+  );
+}
+
+Widget appBarBuilder(String title, String subtitle) {
+  return AppBar(
+      title: AppBarTitle(title, subtitle),
+      titleSpacing: 24.0,
+      centerTitle: false,
+      elevation: 0,
+      actions: [
+        IconButton(icon: Icon(Icons.share), onPressed: () {}),
+        PopupMenuButton(
+            itemBuilder: (context) => [
+                  PopupMenuItem(child: Text("Hello")),
+                  PopupMenuItem(child: Text("World")),
+                ]),
+      ],
+      backgroundColor: Colors.indigo);
+}
+
+class AppBarTitle extends StatelessWidget {
+  final String title, subtitle;
+  // TextTheme textTheme;
+  AppBarTitle(this.title, this.subtitle);
+
+  @override
+  Widget build(BuildContext context) {
+    // textTheme = Theme.of(context).appBarTheme
+    return Column(
+      children: [
+        Align(
+            child: Text(title, style: TextStyle(fontSize: 24.0)),
+            alignment: Alignment.topLeft),
+        Align(
+            child: Text(subtitle, style: TextStyle(fontSize: 16.0)),
+            alignment: Alignment.topLeft),
+      ],
     );
   }
 }

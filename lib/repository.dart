@@ -16,6 +16,7 @@ List<Item> deserializeItemList(String rawData) {
 abstract class Repository {
   Stream<List<Item>> getItemListStream();
   Future<void> updateItems(List<Item> itemList);
+  Future<void> syncItems();
   void start();
 }
 
@@ -72,6 +73,12 @@ class BasicDartNetworkRepository implements Repository {
     _fetch();
     return null;
   }
+
+  @override
+  Future<void> syncItems() {
+    // TODO: implement syncItems
+    throw UnimplementedError();
+  }
 }
 
 class DartNetworkWithCacheRepository extends BasicDartNetworkRepository {
@@ -82,8 +89,12 @@ class DartNetworkWithCacheRepository extends BasicDartNetworkRepository {
 
   DateTime lastFetchTime;
 
-  DartNetworkWithCacheRepository({String getEndpoint, String sendEndpoint})
+  Duration _cacheMaxAge;
+
+  DartNetworkWithCacheRepository(
+      {String getEndpoint, String sendEndpoint, Duration cacheMaxAge})
       : super(getEndpoint: getEndpoint, sendEndpoint: sendEndpoint) {
+    _cacheMaxAge = cacheMaxAge ?? Duration(seconds: 10);
     _cachedItemListStreamController = StreamController();
     _cachedItemListStream = _cachedItemListStreamController.stream;
     // Everytime the network stream gets a new itemList from server, it updates
@@ -91,7 +102,7 @@ class DartNetworkWithCacheRepository extends BasicDartNetworkRepository {
     _cachedItemListStream.listen((event) {
       _itemListStreamController.add(event);
       _cachedItemList = event;
-      _maybeSync(event);
+      _maybeSync();
     });
   }
 
@@ -108,11 +119,20 @@ class DartNetworkWithCacheRepository extends BasicDartNetworkRepository {
     return;
   }
 
-  _maybeSync(List<Item> items) async {
-    if (DateTime.now().difference(lastFetchTime) > Duration(seconds: 10)) {
-      await _sendItemsToServer(items);
-      await _fetch();
+  @override
+  Future<void> syncItems() async {
+    await _sync();
+  }
+
+  _maybeSync() async {
+    if (DateTime.now().difference(lastFetchTime) > _cacheMaxAge) {
+      await _sync();
     }
+  }
+
+  _sync() async {
+    await _sendItemsToServer(_cachedItemList);
+    await _fetch();
   }
 }
 
@@ -148,5 +168,11 @@ class NativeRepository implements Repository {
   @override
   void start() {
     // TODO: implement start
+  }
+
+  @override
+  Future<void> syncItems() {
+    // TODO: implement syncItems
+    throw UnimplementedError();
   }
 }

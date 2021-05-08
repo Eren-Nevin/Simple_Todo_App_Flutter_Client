@@ -33,9 +33,6 @@ class _ItemWidgetListState extends State<ItemWidgetList> {
       onReorder: (oldPos, newPos) {
         var _newList = reorderableListViewOrderer(_itemList, oldPos, newPos);
         _viewModel.setItemsFromViewItems(_newList);
-        // setState(() {
-        //   _itemList = _newList;
-        // });
       },
     );
   }
@@ -46,7 +43,7 @@ List<T> reorderableListViewOrderer<T>(List<T> oldList, int oldPos, int newPos) {
 
   // print("$oldPos, $newPos");
 
-  // TODO: Why this is necessary?
+  // TODO: Why is this necessary?
   if (newPos > oldPos) newPos--;
 
   List<T> _newList = [];
