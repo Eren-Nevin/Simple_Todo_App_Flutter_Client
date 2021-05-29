@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:list/mainBodyWidget.dart';
+// import 'package:list/mainBodyWidget.dart';
+import 'package:list/itemWidgetList.dart';
+import 'package:list/newItemWidget.dart';
 
 import './viewModel.dart';
 import 'utilities.dart';
@@ -16,9 +18,20 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   ViewModel _viewModel;
-  ValueNotifier<bool> startAddingItems;
-  _MyHomePageState(this._viewModel) {
-    startAddingItems = ValueNotifier(false);
+  ValueNotifier<bool> addingNewItem = ValueNotifier(false);
+  Key itemWidgetListGlobalKey = GlobalKey();
+  Key otherKey = GlobalKey();
+  Key newItemWidgetKey = GlobalKey();
+
+  _MyHomePageState(this._viewModel);
+
+  Future<void> onRefreshHandler() async {
+    // _viewModel.starAllItems();
+    // Future.delayed(Duration(seconds: 3), () {
+    //   _viewModel.addNewItem("Testing", "details");
+    // });
+    await _viewModel.syncWithServer();
+    return;
   }
 
   @override
@@ -28,14 +41,31 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Container(
         alignment: Alignment.topCenter,
         child: Container(
-          child: ItemListWithTextFieldWidget(_viewModel, startAddingItems),
+          child: Column(children: [
+            NewItemWidget(
+              (str) {
+                // _viewModel.addItem(str, "Details");
+                _viewModel.addNewItem(str, "Details");
+              },
+              addingNewItem,
+              key: newItemWidgetKey,
+            ),
+            Flexible(
+              child: RefreshIndicator(
+                  key: otherKey,
+                  child:
+                      ItemWidgetList(_viewModel, key: itemWidgetListGlobalKey),
+                  onRefresh: onRefreshHandler),
+            ),
+          ]),
+          // child: ItemListWithTextFieldWidget(_viewModel, startAddingItems),
           margin: EdgeInsets.all(8.0),
         ),
         color: Colors.indigo,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          startAddingItems.value = !startAddingItems.value;
+          addingNewItem.value = true;
         },
         tooltip: 'Add New Item',
         child: Icon(Icons.add),
@@ -43,6 +73,13 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 }
+// onNewItemTextSubmit(String newItemTitle) {
+//     setState(() {
+//       addingItemState = false;
+//       // TODO: Add Ability To Change Details
+//       _viewModel.addItem(newItemTitle, "Details");
+//     });
+//   }
 
 //TODO: Have One Tab in Navigation Bar For Private List, The Other Two Can Be
 //Groceries & Family Tasks Which Are Shared Among A Family.

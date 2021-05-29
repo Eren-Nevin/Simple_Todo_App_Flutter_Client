@@ -16,3 +16,7 @@ getWeekDayName(DateTime time) {
       return 'Friday';
   }
 }
+
+int getCurrentEpoch() {
+  return DateTime.now().millisecondsSinceEpoch;
+}

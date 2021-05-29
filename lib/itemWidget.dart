@@ -1,37 +1,56 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import './viewItem.dart';
+import './model.dart';
+import './viewModel.dart';
 
-class ItemWidget extends StatelessWidget {
-  String _itemTitle;
-  void Function() _itemRemoveHandler;
-  // We take all objects necessary for constructing an ItemWidget in its
-  // constructor
+class ItemWidget extends StatefulWidget {
+  ViewModel _viewModel;
 
-  ItemWidget(ViewItem viewItem) {
-    _itemTitle = viewItem.item.title;
-    _itemRemoveHandler = viewItem.removeHandler;
+  int _itemId;
+
+  ItemWidget(this._viewModel, this._itemId, {Key key}) : super(key: key);
+
+  @override
+  State<StatefulWidget> createState() {
+    return _ItemWidgetState(_viewModel, _itemId);
+  }
+}
+
+class _ItemWidgetState extends State<StatefulWidget> {
+  int _itemId;
+  Item _item;
+  ViewModel _viewModel;
+  StreamSubscription sub;
+  _ItemWidgetState(this._viewModel, this._itemId) {
+    sub = _viewModel.getItemChangedStream().listen((event) {
+      print("Item State Changed");
+      setState(() {});
+    });
   }
 
   @override
-  final key = UniqueKey();
+  void dispose() {
+    sub.cancel();
+    // TODO: implement dispose
+    super.dispose();
+  }
 
-  // For now we use a ListTile widget as our base.
   @override
   Widget build(BuildContext context) {
+    _item = _viewModel.getItemForId(_itemId);
+    print("Rebuilding ${_item.title}");
+    print("${_item.important}");
     return Dismissible(
-      key: key,
+      key: ValueKey("${_item.id} Dismissible"),
       child: Container(
-        child: ListTile(
-          title: Text(_itemTitle, style: TextStyle(fontSize: 20.0)),
-          subtitle: Text(
-            "subtitle",
-          ),
-          leading: Icon(
-            Icons.star_outline_rounded,
-            size: 32.0,
-          ),
-          // tileColor: Colors.white,
-        ),
+        child: listTileBuilder(_item.title, _item.details, _item.important,
+            () async {
+          print("Star Clicked On ${_item.title}");
+          _viewModel.toggleStarItem(_item);
+          // await _streamSub.cancel();
+          // _changedItemsStream = null;
+        }),
         margin: EdgeInsets.symmetric(vertical: 1.0),
         decoration: itemDecoration,
       ),
@@ -43,12 +62,12 @@ class ItemWidget extends StatelessWidget {
           return true;
         }
       },
-      onDismissed: (direction) {
-        _itemRemoveHandler();
+      onDismissed: (direction) async {
+        print("Dismissing ${_item.title}");
+        // await _streamSub.cancel();
+        _viewModel.removeItem(_item);
       },
-      // onResize: () {
-      //   print("Resizing");
-      // },
+      onResize: () {},
       // TODO: Add Animation To Background
       direction: DismissDirection.horizontal,
       background: Container(
@@ -61,6 +80,23 @@ class ItemWidget extends StatelessWidget {
       // secondaryBackground: Container(color: Colors.green),
     );
   }
+}
+
+Widget listTileBuilder(String _itemTitle, String _itemDetails,
+    bool _itemImportance, VoidCallback _starHandler) {
+  return ListTile(
+    title: Text(_itemTitle, style: TextStyle(fontSize: 20.0)),
+    subtitle: _itemDetails.isEmpty ? null : Text(_itemDetails),
+    leading: IconButton(
+      icon: Icon(
+        _itemImportance ? Icons.star_rounded : Icons.star_outline_rounded,
+        size: 32.0,
+      ),
+      onPressed: () {
+        _starHandler();
+      },
+    ),
+  );
 }
 
 ShapeBorder listItemShapeBorder = RoundedRectangleBorder(
