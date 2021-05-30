@@ -146,6 +146,10 @@ class BasicDartNetworkRepository implements Repository {
       }
     });
     _fetch();
+    // Testing: Using Polling For Sync
+    // Timer.periodic(Duration(seconds: 3), (timer) {
+    //   syncWithServer();
+    // });
   }
 
   _fetch() async {

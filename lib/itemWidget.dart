@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import './model.dart';
@@ -87,15 +88,23 @@ Widget listTileBuilder(String _itemTitle, String _itemDetails,
   return ListTile(
     title: Text(_itemTitle, style: TextStyle(fontSize: 20.0)),
     subtitle: _itemDetails.isEmpty ? null : Text(_itemDetails),
+    // leading: TweenAnimationBuilder(
     leading: IconButton(
       icon: Icon(
         _itemImportance ? Icons.star_rounded : Icons.star_outline_rounded,
-        size: 32.0,
+        size: 36.0,
       ),
       onPressed: () {
         _starHandler();
       },
     ),
+    // duration: Duration(seconds: 1),
+    // tween: Tween(begin: 0.5, end: 1.5),
+    // builder: (context, value, child) {
+    //   return Transform.scale(child: child, scale: value);
+    // },
+    // ),
+    // minLeadingWidth: 24,
   );
 }
 
@@ -106,6 +115,13 @@ ShapeBorder listItemShapeBorder = RoundedRectangleBorder(
 ShapeDecoration itemDecoration = ShapeDecoration(
   shape: listItemShapeBorder,
   color: Colors.white,
+  // shadows: [
+  //   BoxShadow(
+  //       color: Colors.grey.withOpacity(0.5),
+  //       spreadRadius: 5,
+  //       blurRadius: 8,
+  //       offset: Offset.fromDirection(pi / 2, 2))
+  // ],
 );
 
 ShapeDecoration removeDismissDecoration =
