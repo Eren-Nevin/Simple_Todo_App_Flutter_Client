@@ -25,38 +25,31 @@ class _ItemWidgetListState extends State<ItemWidgetList> {
     listKey = GlobalKey<AnimatedListState>();
     _itemList = [..._viewModel.getCurrentItems()];
 
-    // _viewModel.getItemListStream().listen((newList) {
-    //   List<Item> previousItemList = [..._itemList];
-    //   _itemList = [...newList];
-    //   if (previousItemList.length == 0) {
-    //     for (int i = 0; i < _itemList.length; i++) {
-    //       listKey.currentState.insertItem(i);
-    //     }
-    //   }
-    // });
-
     _viewModel.getItemAddedStream().listen((item) {
-      print("Item ${item.title} is being added");
+      // print("Item ${item.title} is being added");
       _itemList.insert(0, item);
-      print("""ListWidget ItemList is ${_itemList.map((e) => e.title)}
-              """);
+      // print("""ListWidget ItemList is ${_itemList.map((e) => e.title)}
+      //         """);
       // _itemList.insert(0, item);
       listKey.currentState.insertItem(0);
       // _viewModel.addItem(item);
     });
 
     _viewModel.getItemRemovedStream().listen((item) {
-      print("Item ${item.title} is being removed");
-      print(
-          "Before Removing the Item List is ${_itemList.map((e) => e.title)}");
+      // print("Item ${item.title} is being removed");
+      // print(
+      //     "Before Removing the Item List is ${_itemList.map((e) => e.title)}");
+
       int index = _itemList.indexWhere((element) => element.id == item.id);
 
       _itemList.removeAt(index);
       listKey.currentState.removeItem(index, (context, animation) {
         animation.addStatusListener((status) {
-          print(status);
+          // print(status);
           // _viewModel.removeItem(item);
         });
+        //TODO: Add animation for item removal when they are not dismissed (aka
+        //synced)
         return SizedBox(
           height: 0,
           width: 0,
@@ -65,7 +58,7 @@ class _ItemWidgetListState extends State<ItemWidgetList> {
     });
 
     _viewModel.getItemChangedStream().listen((item) {
-      print("Item ${item.title} is being changed");
+      // print("Item ${item.title} is being changed");
       // print("Widget List Listened On ${item.title} Change");
       int index = _itemList.indexWhere((element) => element.id == item.id);
       // print("Index Is $index");
@@ -84,13 +77,13 @@ class _ItemWidgetListState extends State<ItemWidgetList> {
       key: listKey,
       itemBuilder: (context, index, animation) {
         // print("${_itemList.map((e) => e.item.title).toList()} From Builder");
-        print("Index Is: $index");
-        print("Building $index which is ${_itemList[index].title}");
+        // print("Index Is: $index");
+        // print("Building $index which is ${_itemList[index].title}");
         if (index >= _itemList.length) {
           return null;
         } else {
           //TODO: Make Animation Instant When Fetching Multiple Data.
-          print("Creating Item ${_itemList[index].title}");
+          // print("Creating Item ${_itemList[index].title}");
           final int itemId = _itemList[index].id;
           return SlideTransition(
             position: animation

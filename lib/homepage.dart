@@ -22,46 +22,61 @@ class _MyHomePageState extends State<MyHomePage> {
   Key itemWidgetListGlobalKey = GlobalKey();
   Key otherKey = GlobalKey();
   Key newItemWidgetKey = GlobalKey();
+  // bool isConnected = false;
 
-  _MyHomePageState(this._viewModel);
+  _MyHomePageState(this._viewModel) {
+    _viewModel.dataReset.addListener(() {
+      // setState(() {
+      // isConnected = _viewModel.dataReset.value;
+      // });
+    });
+  }
 
+  //TODO: Remove This and the refresh handler itself.
   Future<void> onRefreshHandler() async {
     // _viewModel.starAllItems();
     // Future.delayed(Duration(seconds: 3), () {
     //   _viewModel.addNewItem("Testing", "details");
     // });
-    await _viewModel.syncWithServer();
-    return;
+    // await _viewModel.syncWithServer();
+    // return;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: appBarBuilder("${getWeekDayName(DateTime.now())}", "Groceries"),
-      body: Container(
-        alignment: Alignment.topCenter,
-        child: Container(
-          child: Column(children: [
-            NewItemWidget(
-              (str) {
-                // _viewModel.addItem(str, "Details");
-                _viewModel.addNewItem(str, "Details");
-              },
-              addingNewItem,
-              key: newItemWidgetKey,
+      body: Stack(
+        children: [
+          Container(
+            alignment: Alignment.topCenter,
+            child: Container(
+              child: Column(children: [
+                NewItemWidget(
+                  (str) {
+                    // _viewModel.addItem(str, "Details");
+                    _viewModel.addNewItem(str, "Details");
+                  },
+                  addingNewItem,
+                  key: newItemWidgetKey,
+                ),
+                Flexible(
+                  child: RefreshIndicator(
+                      key: otherKey,
+                      child: ItemWidgetList(_viewModel,
+                          key: itemWidgetListGlobalKey),
+                      onRefresh: onRefreshHandler),
+                ),
+              ]),
+              // child: ItemListWithTextFieldWidget(_viewModel, startAddingItems),
+              margin: EdgeInsets.all(8.0),
             ),
-            Flexible(
-              child: RefreshIndicator(
-                  key: otherKey,
-                  child:
-                      ItemWidgetList(_viewModel, key: itemWidgetListGlobalKey),
-                  onRefresh: onRefreshHandler),
-            ),
-          ]),
-          // child: ItemListWithTextFieldWidget(_viewModel, startAddingItems),
-          margin: EdgeInsets.all(8.0),
-        ),
-        color: Colors.indigo,
+            color: Colors.indigo,
+          ),
+          // Visibility(
+          //     child: Icon(Icons.question_answer_sharp, size: 200),
+          //     visible: !isConnected),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

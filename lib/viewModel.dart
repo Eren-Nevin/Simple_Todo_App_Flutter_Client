@@ -19,6 +19,9 @@ class ViewModel {
   Stream<Item> _itemChangedStream;
   StreamController<Item> _itemChangedStreamController;
 
+  //TODO: Use Getter
+  ValueNotifier<bool> dataReset;
+
   ViewModel({Repository repository}) {
     _repository = repository ?? BasicDartNetworkRepository();
     // _itemListStream = _repository.getItemListStream();
@@ -30,8 +33,22 @@ class ViewModel {
     _itemChangedStream = _itemChangedStreamController.stream;
     _itemRemovedStreamController = StreamController.broadcast();
     _itemRemovedStream = _itemRemovedStreamController.stream;
+    dataReset = _repository.dataReset;
     _startListeningOnRepository();
+    dataReset.addListener(() {
+      // resetItems();
+    });
     _repository.start();
+    // _repository.syncWithServer();
+    // syncFromServer();
+  }
+
+  resetItems() async {
+    for (var item in _currentItemList) {
+      // _currentItemList.remove(item);
+      _itemRemovedStreamController.add(item);
+    }
+    _currentItemList = [];
   }
 
   // Stream<List<Item>> getItemListStream() {
@@ -46,15 +63,15 @@ class ViewModel {
     }
   }
 
-  Future<void> syncWithServer() async {
-    await _repository.syncWithServer();
-  }
+  // Future<void> syncWithServer() async {
+  //   await _repository.syncWithServer();
+  // }
 
-  Future<void> syncFromServer() async {
-    await _repository.fetch();
-  }
+  // Future<void> syncFromServer() async {
+  //   await _repository.fetch();
+  // }
 
-  Future<void> syncToServer() async {}
+  // Future<void> syncToServer() async {}
 
   List<Item> getCurrentItems() {
     return _currentItemList;
@@ -133,21 +150,18 @@ class ViewModel {
   void _startListeningOnRepository() {
     _repository.getItemAddedStream().listen((item) {
       _currentItemList.insert(0, item);
-      print("View Model Listened On New Item Added");
       _itemAddedStreamController.add(item);
-      // _itemAddedStreamController.add(event);
     });
     _repository.getItemChangedStream().listen((item) {
       int index =
           _currentItemList.indexWhere((element) => element.id == item.id);
       _currentItemList[index] = item;
       _itemChangedStreamController.add(item);
-      // _itemChangedStreamController.add(item);
     });
     _repository.getItemRemovedStream().listen((item) {
+      print("Removing ${item.title} In ViewModel");
       _currentItemList.remove(item);
       _itemRemovedStreamController.add(item);
-      // _itemRemovedStreamController.add(item);
     });
   }
 }

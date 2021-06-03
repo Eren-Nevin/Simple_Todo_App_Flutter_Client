@@ -16,6 +16,17 @@ class Transaction {
         'timestamp': item.timestamp,
         'important': item.important
       };
+
+  bool operator ==(Object t) {
+    if (t is Transaction) {
+      return t.id == id;
+    } else {
+      return false;
+    }
+  }
+
+  @override
+  int get hashCode => id;
 }
 
 String getStringForTransactionType(TransactionType type) {

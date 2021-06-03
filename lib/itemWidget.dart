@@ -25,7 +25,7 @@ class _ItemWidgetState extends State<StatefulWidget> {
   StreamSubscription sub;
   _ItemWidgetState(this._viewModel, this._itemId) {
     sub = _viewModel.getItemChangedStream().listen((event) {
-      print("Item State Changed");
+      // print("Item State Changed");
       setState(() {});
     });
   }
@@ -40,8 +40,8 @@ class _ItemWidgetState extends State<StatefulWidget> {
   @override
   Widget build(BuildContext context) {
     _item = _viewModel.getItemForId(_itemId);
-    print("Rebuilding ${_item.title}");
-    print("${_item.important}");
+    // print("Rebuilding ${_item.title}");
+    // print("${_item.important}");
     return Dismissible(
       key: ValueKey("${_item.id} Dismissible"),
       child: Container(
