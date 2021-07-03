@@ -6,7 +6,7 @@ import './model.dart';
 import './itemWidget.dart';
 
 class ItemWidgetList extends StatefulWidget {
-  ViewModel _viewModel;
+  final ListViewModel _viewModel;
   ItemWidgetList(this._viewModel, {Key key}) : super(key: key);
 
   @override
@@ -16,8 +16,7 @@ class ItemWidgetList extends StatefulWidget {
 }
 
 class _ItemWidgetListState extends State<ItemWidgetList> {
-  ViewModel _viewModel;
-  // AnimatedListState animatedListState;
+  final ListViewModel _viewModel;
   GlobalKey<AnimatedListState> listKey;
   List<Item> _itemList = [];
 
@@ -26,28 +25,16 @@ class _ItemWidgetListState extends State<ItemWidgetList> {
     _itemList = [..._viewModel.getCurrentItems()];
 
     _viewModel.getItemAddedStream().listen((item) {
-      // print("Item ${item.title} is being added");
       _itemList.insert(0, item);
-      // print("""ListWidget ItemList is ${_itemList.map((e) => e.title)}
-      //         """);
-      // _itemList.insert(0, item);
       listKey.currentState.insertItem(0);
-      // _viewModel.addItem(item);
     });
 
     _viewModel.getItemRemovedStream().listen((item) {
-      // print("Item ${item.title} is being removed");
-      // print(
-      //     "Before Removing the Item List is ${_itemList.map((e) => e.title)}");
-
       int index = _itemList.indexWhere((element) => element.id == item.id);
 
       _itemList.removeAt(index);
       listKey.currentState.removeItem(index, (context, animation) {
-        animation.addStatusListener((status) {
-          // print(status);
-          // _viewModel.removeItem(item);
-        });
+        animation.addStatusListener((status) {});
         //TODO: Add animation for item removal when they are not dismissed (aka
         //synced)
         return SizedBox(
@@ -58,17 +45,10 @@ class _ItemWidgetListState extends State<ItemWidgetList> {
     });
 
     _viewModel.getItemChangedStream().listen((item) {
-      // print("Item ${item.title} is being changed");
-      // print("Widget List Listened On ${item.title} Change");
       int index = _itemList.indexWhere((element) => element.id == item.id);
-      // print("Index Is $index");
       _itemList[index] = item;
     });
   }
-
-  // static List<int> calculatePreviousIds(List<Item> previousItemList) {
-  //   return previousItemList.map((e) => e.id).toList();
-  // }
 
   @override
   Widget build(BuildContext context) {

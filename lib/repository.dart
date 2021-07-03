@@ -69,7 +69,8 @@ abstract class Repository {
   Future<void> syncToServer();
   Future<void> fetch();
   // Future<void> syncItems();
-  void start();
+  void connect(Map<String, dynamic> credentials);
+  void disconnect();
 
   //TODO: Make it gettable by a getter
   ValueNotifier<bool> dataReset;
@@ -77,7 +78,7 @@ abstract class Repository {
 
 // This is the stand-in repository that connects to server for each action
 // without any caching or smart behavior.
-class BasicDartNetworkRepository implements Repository {
+class WebsocketNetworkRepository implements Repository {
   Stream<Item> _itemAddedStream;
   Stream<Item> _itemChangedStream;
   Stream<Item> _itemRemovedStream;
@@ -103,13 +104,13 @@ class BasicDartNetworkRepository implements Repository {
   ValueNotifier<bool> dataReset = ValueNotifier(false);
   ValueNotifier<bool> websocketConnected = ValueNotifier(false);
 
-  BasicDartNetworkRepository({String getEndpoint, String sendEndpoint}) {
+  WebsocketNetworkRepository({String getEndpoint, String sendEndpoint}) {
     // _getEndPoint = getEndpoint ?? "$defaultServerAddress/api/get_items";
 
-    // Use real deployed server instead of localhost when
-    // if (kReleaseMode) {
-    defaultServerAddress = "https://dinkedpawn.com:9999";
-    // }
+    // Use real deployed server instead of localhost when on release not debug
+    if (kReleaseMode) {
+      defaultServerAddress = "https://dinkedpawn.com:9999";
+    }
     _getEndPoint = getEndpoint ?? "$defaultServerAddress/api/get_transactions";
     _sendEndPoint =
         sendEndpoint ?? "$defaultServerAddress/api/send_transactions";
@@ -161,14 +162,20 @@ class BasicDartNetworkRepository implements Repository {
   }
 
   @override
-  void start() {
-    createWebSocket();
+  void connect(Map<String, dynamic> credentials) {
+    createWebSocket(credentials['token']);
     addWebSocketOnEventsListeners();
     addWebSocketOnConnectListener();
     addWebSocketOnDisconnectListener();
     // Listen on item changes coming from viewModel (e.g. user adds a new item).
     startListeningOnInputTransactions();
     connectWebSocket();
+  }
+
+  //TODO: Make proper destructor.
+  @override
+  void disconnect() {
+    socket.disconnect();
   }
 
   void startListeningOnInputTransactions() {
@@ -200,11 +207,15 @@ class BasicDartNetworkRepository implements Repository {
     });
   }
 
-  void createWebSocket() {
+  void createWebSocket(String token) {
     socket = IO.io(
         "$defaultServerAddress/socket.io",
         IO.OptionBuilder()
             .setTransports(['websocket']) // for Flutter or Dart VM
+            .setQuery({
+              'token': token
+              // r"sha256$x7j72cOQ$66ac27b02df0456ca079215a20f27bad17ff0ebd25456e3bb6ecf1410aa24707"
+            })
             .disableAutoConnect() // disable auto-connection
             .build());
   }

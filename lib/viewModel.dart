@@ -6,12 +6,9 @@ import 'package:flutter/material.dart';
 import './model.dart' show Item;
 import './repository.dart';
 
-class ViewModel {
+class ListViewModel {
   Repository _repository;
   List<Item> _currentItemList = [];
-  Stream<List<Item>> _itemListStream;
-  StreamController<List<Item>> _viewItemListStreamController;
-  Stream<List<Item>> _viewItemListStream;
   Stream<Item> _itemAddedStream;
   StreamController<Item> _itemAddedStreamController;
   Stream<Item> _itemRemovedStream;
@@ -19,41 +16,83 @@ class ViewModel {
   Stream<Item> _itemChangedStream;
   StreamController<Item> _itemChangedStreamController;
 
+  final Map<String, dynamic> credentials;
+
+  StreamSubscription repositoryItemAddedSubscription;
+  StreamSubscription repositoryItemChangedSubscription;
+  StreamSubscription repositoryItemRemovedSubscription;
+
   //TODO: Use Getter
   ValueNotifier<bool> dataReset;
 
-  ViewModel({Repository repository}) {
-    _repository = repository ?? BasicDartNetworkRepository();
-    // _itemListStream = _repository.getItemListStream();
-    _viewItemListStreamController = StreamController.broadcast();
-    _viewItemListStream = _viewItemListStreamController.stream;
+  ListViewModel(this.credentials, {Repository repository}) {
+    _repository = repository ?? WebsocketNetworkRepository();
     _itemAddedStreamController = StreamController.broadcast();
     _itemAddedStream = _itemAddedStreamController.stream;
     _itemChangedStreamController = StreamController.broadcast();
     _itemChangedStream = _itemChangedStreamController.stream;
     _itemRemovedStreamController = StreamController.broadcast();
     _itemRemovedStream = _itemRemovedStreamController.stream;
-    dataReset = _repository.dataReset;
+    // dataReset = _repository.dataReset;
     _startListeningOnRepository();
-    dataReset.addListener(() {
-      // resetItems();
+    // dataReset.addListener(() {
+    // resetItems();
+    // });
+    connect(credentials);
+  }
+
+  void destructor() {
+    disconnect();
+    _stopListeningOnRepository();
+    _repository = null;
+  }
+
+  void _startListeningOnRepository() {
+    repositoryItemAddedSubscription =
+        _repository.getItemAddedStream().listen((item) {
+      _currentItemList.insert(0, item);
+      _itemAddedStreamController.add(item);
     });
-    _repository.start();
-    // _repository.syncWithServer();
-    // syncFromServer();
+    repositoryItemChangedSubscription =
+        _repository.getItemChangedStream().listen((item) {
+      int index =
+          _currentItemList.indexWhere((element) => element.id == item.id);
+      _currentItemList[index] = item;
+      _itemChangedStreamController.add(item);
+    });
+    repositoryItemRemovedSubscription =
+        _repository.getItemRemovedStream().listen((item) {
+      print("Removing ${item.title} In ViewModel");
+      _currentItemList.remove(item);
+      _itemRemovedStreamController.add(item);
+    });
+  }
+
+  _stopListeningOnRepository() {
+    repositoryItemAddedSubscription.cancel();
+    repositoryItemRemovedSubscription.cancel();
+    repositoryItemChangedSubscription.cancel();
+  }
+
+  // It needs a dictionary object which has a key called 'token' with a string
+  // value.
+  // TODO: Change this to an actual type instead of a map.
+  connect(Map<String, dynamic> credentials) async {
+    _repository.connect(credentials);
+  }
+
+  // TODO: Should this be private?
+  disconnect() {
+    _repository.disconnect();
   }
 
   resetItems() async {
     for (var item in _currentItemList) {
-      // _currentItemList.remove(item);
       _itemRemovedStreamController.add(item);
     }
     _currentItemList = [];
   }
 
-  // Stream<List<Item>> getItemListStream() {
-  //   return _viewItemListStream;
-  // }
   // TESTING
   Future<void> starAllItems() async {
     for (var item in _currentItemList) {
@@ -62,16 +101,6 @@ class ViewModel {
       await changeItem(item);
     }
   }
-
-  // Future<void> syncWithServer() async {
-  //   await _repository.syncWithServer();
-  // }
-
-  // Future<void> syncFromServer() async {
-  //   await _repository.fetch();
-  // }
-
-  // Future<void> syncToServer() async {}
 
   List<Item> getCurrentItems() {
     return _currentItemList;
@@ -93,15 +122,11 @@ class ViewModel {
     print(
         "Removing ${item.title} From ${_currentItemList.map((e) => e.title)}");
     await _repository.removeItem(item);
-    // await _repository.syncItems(lastItemList);
   }
 
   Future<void> addItem(Item item) async {
     print("Adding ${item.title} to ${_currentItemList.map((e) => e.title)}");
     await _repository.addItem(item);
-    // Item newItem =
-    //     _createNewItem(lastItemList.length, itemTitle, subtitle, false);
-    // await _repository.syncItems(lastItemList);
   }
 
   Future<void> addNewItem(String itemTitle, String details) {
@@ -113,16 +138,6 @@ class ViewModel {
     print("Changing ${item.title} in ${_currentItemList.map((e) => e.title)}");
     await _repository.changeItem(item);
   }
-
-  // void removeItemOffered(Item item) {
-  //   print("Remove Offer ${item.title}");
-  //   _itemChangedStreamController.add(item);
-  // }
-
-  // void addItemOffered(String itemTitle, String details) {
-  //   Item newItem = _createNewItem(itemTitle, details, false);
-  //   _itemAddedStreamController.add(newItem);
-  // }
 
   Future<void> toggleStarItem(Item item) async {
     final int index =
@@ -136,33 +151,6 @@ class ViewModel {
     final int index =
         _currentItemList.indexWhere((element) => element.id == itemId);
     return _currentItemList[index];
-  }
-
-  // Future<void> setItems(List<Item> itemList) async {
-  //   await _repository.syncItems(_currentItemList);
-  // }
-
-  // Future<void> setItemsFromItems(List<Item> viewItems) async {
-  //   await _repository.syncItems(lastItemList);
-  //   await _sendItems(_getItemListFromItemList(viewItems));
-  // }
-
-  void _startListeningOnRepository() {
-    _repository.getItemAddedStream().listen((item) {
-      _currentItemList.insert(0, item);
-      _itemAddedStreamController.add(item);
-    });
-    _repository.getItemChangedStream().listen((item) {
-      int index =
-          _currentItemList.indexWhere((element) => element.id == item.id);
-      _currentItemList[index] = item;
-      _itemChangedStreamController.add(item);
-    });
-    _repository.getItemRemovedStream().listen((item) {
-      print("Removing ${item.title} In ViewModel");
-      _currentItemList.remove(item);
-      _itemRemovedStreamController.add(item);
-    });
   }
 }
 

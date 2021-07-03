@@ -6,7 +6,7 @@ import './model.dart';
 import './viewModel.dart';
 
 class ItemWidget extends StatefulWidget {
-  ViewModel _viewModel;
+  ListViewModel _viewModel;
 
   int _itemId;
 
@@ -21,7 +21,7 @@ class ItemWidget extends StatefulWidget {
 class _ItemWidgetState extends State<StatefulWidget> {
   int _itemId;
   Item _item;
-  ViewModel _viewModel;
+  ListViewModel _viewModel;
   StreamSubscription sub;
   _ItemWidgetState(this._viewModel, this._itemId) {
     sub = _viewModel.getItemChangedStream().listen((event) {

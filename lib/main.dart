@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:list/viewModel.dart';
 
-import './homepage.dart' show MyHomePage;
+import './homepage.dart' show ActivePage;
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final ViewModel _viewModel = ViewModel();
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -16,7 +15,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.green,
       ),
-      home: MyHomePage(_viewModel, title: 'List'),
+      home: ActivePage(),
     );
   }
 }
