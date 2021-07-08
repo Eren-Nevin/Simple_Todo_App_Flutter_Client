@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:list/utilities.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-Widget authenticationWidgetBuilder(
-    void Function(Map<String, dynamic>) onSuccessfulLogin) {}
+import 'package:list/context.dart';
 
 class AuthenticationPage extends StatefulWidget {
   final void Function(Map<String, dynamic>) onSuccessfulLogin;
@@ -17,23 +18,48 @@ class AuthenticationPage extends StatefulWidget {
 
 class _AuthenticationPageState extends State<AuthenticationPage> {
   final void Function(Map<String, dynamic>) onSuccessfulLogin;
-  _AuthenticationPageState(this.onSuccessfulLogin);
+  bool checkingAlreadyLoggedIn = true;
+
+  _AuthenticationPageState(this.onSuccessfulLogin) {
+    checkAlreadyLoggedIn();
+  }
+
+  checkAlreadyLoggedIn() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String savedToken = prefs.getString('userToken') ?? "";
+    // print(savedToken);
+    // savedToken = "";
+    if (savedToken != "") {
+      final rawResponse = await http.post(
+          Uri.parse("${getBaseUrl()}/api/auth/check_login"),
+          body: json.encode({'token': savedToken}));
+      final response = json.decode(rawResponse.body);
+      if (response['success']) {
+        await onSuccessfulLogin({'token': savedToken});
+      }
+    }
+    setState(() {
+      checkingAlreadyLoggedIn = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text("Login"),
-          backgroundColor: Colors.indigo,
-          elevation: 0,
-          centerTitle: false,
-          titleSpacing: 24.0,
-        ),
-        body: Container(
-          color: Colors.indigo,
-          child: AuthenticationBodyWidget(this.onSuccessfulLogin),
-          padding: EdgeInsets.symmetric(vertical: 8.0),
-        ));
+    return checkingAlreadyLoggedIn
+        ? BlankWidgetBuilder()
+        : Scaffold(
+            appBar: AppBar(
+              title: Text("Login"),
+              backgroundColor: Colors.indigo,
+              elevation: 0,
+              centerTitle: false,
+              titleSpacing: 24.0,
+            ),
+            body: Container(
+              color: Colors.indigo,
+              child: AuthenticationBodyWidget(this.onSuccessfulLogin),
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+            ));
   }
 }
 
@@ -56,12 +82,12 @@ class _AuthenticationBodyWidgetState extends State<AuthenticationBodyWidget> {
   String authErrorMessage = "";
   bool isSigningUp = false;
 
-  _AuthenticationBodyWidgetState(this.onSuccessfulLogin);
+  _AuthenticationBodyWidgetState(this.onSuccessfulLogin) {}
 
   // TODO: Create an object for both email-pass credentials and token ones.
   Future<Map<String, dynamic>> _authenticate(credentials) async {
     final rawResponse = await http.post(
-        Uri.parse("http://127.0.0.1:8833/api/login"),
+        Uri.parse("${getBaseUrl()}/api/auth/login"),
         body: json.encode(credentials));
     final response = json.decode(rawResponse.body);
     if (response['success']) {
@@ -80,7 +106,7 @@ class _AuthenticationBodyWidgetState extends State<AuthenticationBodyWidget> {
   Future<Map<String, dynamic>> signup(
       String email, String password, String profile) async {
     final rawResponse = await http.post(
-        Uri.parse("http://127.0.0.1:8833/api/signup"),
+        Uri.parse("${getBaseUrl()}/api/auth/signup"),
         body: json.encode(
             {'email': email, 'password': password, 'profile': profile}));
 
@@ -186,11 +212,11 @@ class _AuthenticationBodyWidgetState extends State<AuthenticationBodyWidget> {
               TextButton(
                   onPressed: () {
                     setState(() {
-                      isSigningUp = true;
+                      isSigningUp = !isSigningUp;
                     });
                   },
                   child: Text(isSigningUp ? "Login" : "Signup",
-                      style: TextStyle(fontSize: 20.0)))
+                      style: TextStyle(fontSize: 20.0, color: Colors.yellow)))
             ]),
             margin: EdgeInsets.all(16.0))
       ],

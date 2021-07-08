@@ -5,10 +5,15 @@ import 'package:list/newItemWidget.dart';
 import 'package:list/viewModel.dart';
 import 'package:list/utilities.dart';
 
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+import 'package:list/context.dart';
+
 class ListPage extends StatefulWidget {
   final String title;
   final Map<String, dynamic> credentials;
-  final VoidCallback onLogout;
+  final void Function(Map<String, dynamic>) onLogout;
   ListPage(this.credentials, this.onLogout, {Key key, this.title})
       : super(key: key);
 
@@ -18,7 +23,7 @@ class ListPage extends StatefulWidget {
 
 class _ListPageState extends State<ListPage> {
   ListViewModel _viewModel;
-  VoidCallback onLogout;
+  void Function(Map<String, dynamic>) onLogout;
   ValueNotifier<bool> addingNewItem = ValueNotifier(false);
   Key itemWidgetListGlobalKey = GlobalKey();
   Key otherKey = GlobalKey();
@@ -28,11 +33,22 @@ class _ListPageState extends State<ListPage> {
     _viewModel = ListViewModel(credentials);
   }
 
+  // This is only called when user discreetly wants to log out from all of its
+  // devices. Otherwise only the token saved on the device would be deleted and
+  // server won't have any clue.
+  logoutFromAllDevices() {
+    final baseUrl = getBaseUrl();
+    final rawResponse = http.post(Uri.parse("$baseUrl/api/logout"),
+        body: json.encode(_viewModel.credentials));
+    rawResponse.then((value) => print(value.body));
+  }
+
   // TODO: Make a proper destructor.
   cleanUpAndLogout() {
+    final _credentials = _viewModel.credentials;
     _viewModel.destructor();
     _viewModel = null;
-    onLogout();
+    onLogout(_credentials);
   }
 
   @override

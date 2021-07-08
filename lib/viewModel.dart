@@ -7,7 +7,7 @@ import './model.dart' show Item;
 import './repository.dart';
 
 class ListViewModel {
-  Repository _repository;
+  ListRepository _repository;
   List<Item> _currentItemList = [];
   Stream<Item> _itemAddedStream;
   StreamController<Item> _itemAddedStreamController;
@@ -25,7 +25,7 @@ class ListViewModel {
   //TODO: Use Getter
   ValueNotifier<bool> dataReset;
 
-  ListViewModel(this.credentials, {Repository repository}) {
+  ListViewModel(this.credentials, {ListRepository repository}) {
     _repository = repository ?? WebsocketNetworkRepository();
     _itemAddedStreamController = StreamController.broadcast();
     _itemAddedStream = _itemAddedStreamController.stream;

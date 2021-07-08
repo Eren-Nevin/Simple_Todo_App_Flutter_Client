@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 getWeekDayName(DateTime time) {
   switch (time.weekday) {
     case DateTime.saturday:
@@ -19,4 +21,11 @@ getWeekDayName(DateTime time) {
 
 int getCurrentEpoch() {
   return DateTime.now().millisecondsSinceEpoch;
+}
+
+// TODO: Enhance This
+Widget BlankWidgetBuilder() {
+  return Container(
+    color: Colors.indigo,
+  );
 }

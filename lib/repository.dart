@@ -6,6 +6,8 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
+import 'package:list/context.dart';
+
 // TODO: Make This Work With All Attributes Got From Server Without Needing To Provide
 // Them One By One To Item Serializer
 List<Item> deserializeItemList(String rawData) {
@@ -55,7 +57,7 @@ Transaction rawTransactionConvertor(dynamic rawTransaction) {
   return result;
 }
 
-abstract class Repository {
+abstract class ListRepository {
   Stream<Item> getItemAddedStream();
   Stream<Item> getItemRemovedStream();
   Stream<Item> getItemChangedStream();
@@ -78,7 +80,7 @@ abstract class Repository {
 
 // This is the stand-in repository that connects to server for each action
 // without any caching or smart behavior.
-class WebsocketNetworkRepository implements Repository {
+class WebsocketNetworkRepository implements ListRepository {
   Stream<Item> _itemAddedStream;
   Stream<Item> _itemChangedStream;
   Stream<Item> _itemRemovedStream;
@@ -87,7 +89,7 @@ class WebsocketNetworkRepository implements Repository {
   StreamController<Item> _itemChangedStreamController;
   StreamController<Item> _itemRemovedStreamController;
 
-  String defaultServerAddress = "http://localhost:9999";
+  String _serverAddress = "http://localhost:9999";
   String _getEndPoint;
   // String _getTransactionsEndPoint;
   String _sendEndPoint;
@@ -108,12 +110,11 @@ class WebsocketNetworkRepository implements Repository {
     // _getEndPoint = getEndpoint ?? "$defaultServerAddress/api/get_items";
 
     // Use real deployed server instead of localhost when on release not debug
-    if (kReleaseMode) {
-      defaultServerAddress = "https://dinkedpawn.com:9999";
-    }
-    _getEndPoint = getEndpoint ?? "$defaultServerAddress/api/get_transactions";
-    _sendEndPoint =
-        sendEndpoint ?? "$defaultServerAddress/api/send_transactions";
+    _serverAddress = getBaseUrl();
+
+    // TODO: Remove These
+    _getEndPoint = getEndpoint ?? "$_serverAddress/api/get_transactions";
+    _sendEndPoint = sendEndpoint ?? "$_serverAddress/api/send_transactions";
 
     _itemAddedStreamController = StreamController.broadcast();
     _itemChangedStreamController = StreamController.broadcast();
@@ -209,7 +210,7 @@ class WebsocketNetworkRepository implements Repository {
 
   void createWebSocket(String token) {
     socket = IO.io(
-        "$defaultServerAddress/socket.io",
+        "$_serverAddress/socket.io",
         IO.OptionBuilder()
             .setTransports(['websocket']) // for Flutter or Dart VM
             .setQuery({
